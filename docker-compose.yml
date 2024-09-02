@@ -1,0 +1,123 @@
+version: "3.8"
+
+services:
+  gateway:
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+      - 8080:8080
+    image: functions/gateway:0.6.13
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      read_timeout: 10
+      write_timeout: 10
+      dnsrr: "true"
+
+  prometheus:
+    image: functions/prometheus:latest
+    command: "-config.file=/etc/prometheus/prometheus.yml -storage.local.path=/prometheus -storage.local.memory-chunks=10000 --alertmanager.url=http://alertmanager:9093"
+    ports:
+      - 9090:9090
+    environment:
+      no_proxy: "gateway"
+    networks:
+      - downloads_openfaas_functions
+
+  alertmanager:
+    image: functions/alertmanager:latest
+    environment:
+      no_proxy: "gateway"
+    command:
+      - '-config.file=/alertmanager.yml'
+    networks:
+      - downloads_openfaas_functions
+
+  webhookstash:
+    image: functions/webhookstash:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  hubstats:
+    image: functions/hubstats:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  nodeinfo:
+    image: functions/nodeinfo:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  echoit:
+    image: functions/alpine:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      fprocess: "cat"
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  wordcount:
+    image: functions/alpine:latest
+    labels:
+      function: "true"
+      com.faas.max_replicas: "10"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      fprocess: "wc"
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  base64:
+    image: functions/alpine:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      fprocess: "base64"
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  decodebase64:
+    image: functions/alpine:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      fprocess: "base64 -d"
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+  markdown:
+    image: functions/markdown-render:latest
+    labels:
+      function: "true"
+    networks:
+      - downloads_openfaas_functions
+    environment:
+      no_proxy: "gateway"
+      https_proxy: $https_proxy
+
+networks:
+  downloads_openfaas_functions:
+    driver: bridge

@@ -1,0 +1,19 @@
+FROM openfaas/classic-watchdog:0.18.1 as watchdog
+FROM python:3.8-slim
+
+COPY --from=watchdog /fwatchdog /usr/bin/fwatchdog
+RUN chmod +x /usr/bin/fwatchdog
+
+WORKDIR /home/app
+
+COPY handler.py .
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV fprocess="python3 handler.py"
+EXPOSE 8080
+
+HEALTHCHECK --interval=3s CMD [ -e /tmp/.lock ] || exit 1
+
+CMD ["fwatchdog"]

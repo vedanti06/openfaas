@@ -1,0 +1,12 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+
+functions:
+  minio-webhook:
+    lang: python3
+    handler: ./minio-webhook
+    image: vd0610/minio-webhook:latest
+    networks:
+      - downloads_openfaas_functions
